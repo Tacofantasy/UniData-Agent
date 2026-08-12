@@ -44,6 +44,9 @@ dist/
 .env.local
 resources/docker/graphrag/.env
 
+### Local Secret Config ###
+bootstrap/src/main/resources/application-local.yaml
+
 ### Tmp Out ###
 .output/
 docs/temp

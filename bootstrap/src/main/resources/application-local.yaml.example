@@ -1,0 +1,11 @@
+# 本地密钥配置模板 —— 复制本文件为 application-local.yaml 并填入实际值
+# application-local.yaml 已加入 .gitignore，不会提交到 Git
+# Spring Boot 通过 spring.config.import 自动加载 application-local.yaml
+ai:
+  providers:
+    bailian:
+      api-key: sk-你的百炼API-Key
+    siliconflow:
+      api-key: sk-你的SiliconFlow-API-Key
+    aihubmix:
+      api-key: sk-你的AIHubMix-API-Key

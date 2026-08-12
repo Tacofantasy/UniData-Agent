@@ -7,6 +7,10 @@ spring:
   application:
     name: ragent${unique-name:}-service
 
+  # 导入本地密钥配置（已加入 .gitignore），不存在时静默跳过
+  config:
+    import: "optional:classpath:application-local.yaml"
+
   servlet:
     multipart:
       max-file-size: 50MB
@@ -215,18 +219,18 @@ ai:
 
   chat:
     candidates:
-      - id: qwen-plus
+      - id: qwen3.7-plus
         provider: bailian
-        model: qwen-plus-latest
-      - id: qwen-flash
+        model: qwen3.7-plus
+      - id: qwen3.7-flash
         provider: bailian
-        model: qwen-flash
+        model: qwen3.7-flash-2026-07-15
       - id: qwen3-local
         provider: ollama
         model: qwen3:8b-fp16
-      - id: qwen3-max
+      - id: qwen3.7-max
         provider: bailian
-        model: qwen3-max
+        model: qwen3.7-max-2026-05-17
         supports-thinking: true
       - id: glm-4.7
         provider: siliconflow
@@ -241,13 +245,13 @@ ai:
 
     tiers:
       fast:
-        candidates: [ qwen-flash, qwen-plus, qwen3-local ]
+        candidates: [ qwen3.7-flash, qwen3.7-plus, qwen3-local ]
         timeout-ms: 5000
       standard:
-        candidates: [ qwen3-max, qwen-plus, qwen3-local, gpt-5.4 ]
+        candidates: [ qwen3.7-max, qwen3.7-plus, qwen3-local, gpt-5.4 ]
         timeout-ms: 30000
       deep:
-        candidates: [ qwen3-max, glm-4.7 ]
+        candidates: [ qwen3.7-max, glm-4.7 ]
         timeout-ms: 120000
 
   embedding:
