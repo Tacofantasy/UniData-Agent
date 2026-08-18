@@ -21,10 +21,14 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nageoffer.ai.ragent.framework.context.UserContext;
 import com.nageoffer.ai.ragent.infra.chat.StreamCallback;
+import com.nageoffer.ai.ragent.rag.config.OrchestrationMode;
+import com.nageoffer.ai.ragent.rag.config.OrchestrationProperties;
 import com.nageoffer.ai.ragent.rag.service.ratelimit.ChatQueueLimiter;
 import com.nageoffer.ai.ragent.rag.service.RAGChatService;
 import com.nageoffer.ai.ragent.rag.service.handler.StreamCallbackFactory;
 import com.nageoffer.ai.ragent.rag.service.handler.StreamTaskManager;
+import com.nageoffer.ai.ragent.rag.service.pipeline.AgentChatContext;
+import com.nageoffer.ai.ragent.rag.service.pipeline.AgentChatPipeline;
 import com.nageoffer.ai.ragent.rag.service.pipeline.StreamChatContext;
 import com.nageoffer.ai.ragent.rag.service.pipeline.StreamChatPipeline;
 import com.nageoffer.ai.ragent.rag.trace.StreamChatTraceRunner;
@@ -41,7 +45,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequiredArgsConstructor
 public class RAGChatServiceImpl implements RAGChatService {
 
-    private final StreamChatPipeline chatPipeline;
+    private final StreamChatPipeline streamChatPipeline;
+    private final AgentChatPipeline agentChatPipeline;
+    private final OrchestrationProperties orchestrationProperties;
     private final ChatQueueLimiter chatQueueLimiter;
     private final StreamCallbackFactory callbackFactory;
     private final StreamChatTraceRunner traceRunner;
@@ -53,17 +59,33 @@ public class RAGChatServiceImpl implements RAGChatService {
         String taskId = IdUtil.getSnowflakeNextIdStr();
         StreamCallback callback = callbackFactory.createChatEventHandler(emitter, actualConversationId, taskId);
 
+        OrchestrationMode mode = orchestrationProperties.getMode();
+
         chatQueueLimiter.enqueue(question, actualConversationId, emitter,
                 () -> traceRunner.run(question, actualConversationId, taskId, callback, traceAware -> {
-                    StreamChatContext ctx = StreamChatContext.builder()
-                            .question(question)
-                            .conversationId(actualConversationId)
-                            .taskId(taskId)
-                            .deepThinking(Boolean.TRUE.equals(deepThinking))
-                            .userId(UserContext.getUserId())
-                            .callback(traceAware)
-                            .build();
-                    chatPipeline.execute(ctx);
+                    if (mode == OrchestrationMode.AGENT) {
+                        // Agent 模式：ReAct 循环
+                        AgentChatContext ctx = AgentChatContext.builder()
+                                .question(question)
+                                .conversationId(actualConversationId)
+                                .taskId(taskId)
+                                .deepThinking(Boolean.TRUE.equals(deepThinking))
+                                .userId(UserContext.getUserId())
+                                .callback(traceAware)
+                                .build();
+                        agentChatPipeline.execute(ctx);
+                    } else {
+                        // WORKFLOW 模式：线性管线
+                        StreamChatContext ctx = StreamChatContext.builder()
+                                .question(question)
+                                .conversationId(actualConversationId)
+                                .taskId(taskId)
+                                .deepThinking(Boolean.TRUE.equals(deepThinking))
+                                .userId(UserContext.getUserId())
+                                .callback(traceAware)
+                                .build();
+                        streamChatPipeline.execute(ctx);
+                    }
                 }));
     }
 

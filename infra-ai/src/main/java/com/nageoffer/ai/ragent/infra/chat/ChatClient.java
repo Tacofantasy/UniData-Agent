@@ -18,6 +18,7 @@
 package com.nageoffer.ai.ragent.infra.chat;
 
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
+import com.nageoffer.ai.ragent.framework.convention.ChatResponse;
 import com.nageoffer.ai.ragent.infra.enums.ModelProvider;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
 
@@ -43,6 +44,18 @@ public interface ChatClient {
      * @return 模型返回的完整响应文本
      */
     String chat(ChatRequest request, ModelTarget target);
+
+    /**
+     * 同步聊天方法（支持 Function Calling）
+     * <p>
+     * 当 request.tools 非空时，模型可能在响应中返回 tool_calls。
+     * 返回 {@link ChatResponse} 同时包含文本内容和工具调用请求。
+     *
+     * @param request 聊天请求对象，包含工具定义
+     * @param target  目标模型配置
+     * @return 结构化响应，包含 content 和 toolCalls
+     */
+    ChatResponse chatWithTools(ChatRequest request, ModelTarget target);
 
     /**
      * 流式聊天方法

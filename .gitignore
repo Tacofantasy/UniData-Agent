@@ -50,3 +50,5 @@ bootstrap/src/main/resources/application-local.yaml
 ### Tmp Out ###
 .output/
 docs/temp
+*_output*.txt
+compile_output.txt

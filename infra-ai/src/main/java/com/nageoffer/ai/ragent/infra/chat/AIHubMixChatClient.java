@@ -18,6 +18,7 @@
 package com.nageoffer.ai.ragent.infra.chat;
 
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
+import com.nageoffer.ai.ragent.framework.convention.ChatResponse;
 import com.nageoffer.ai.ragent.framework.trace.RagTraceNode;
 import com.nageoffer.ai.ragent.infra.enums.ModelProvider;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
@@ -37,6 +38,12 @@ public class AIHubMixChatClient extends AbstractOpenAIStyleChatClient {
     @RagTraceNode(name = "aihubmix-chat", type = "LLM_PROVIDER")
     public String chat(ChatRequest request, ModelTarget target) {
         return doChat(request, target);
+    }
+
+    @Override
+    @RagTraceNode(name = "aihubmix-chat-fc", type = "LLM_PROVIDER")
+    public ChatResponse chatWithTools(ChatRequest request, ModelTarget target) {
+        return doChatWithTools(request, target);
     }
 
     @Override

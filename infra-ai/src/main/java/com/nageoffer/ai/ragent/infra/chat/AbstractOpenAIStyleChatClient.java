@@ -20,9 +20,13 @@ package com.nageoffer.ai.ragent.infra.chat;
 import cn.hutool.core.collection.CollUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.nageoffer.ai.ragent.framework.convention.ChatMessage;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
+import com.nageoffer.ai.ragent.framework.convention.ChatResponse;
+import com.nageoffer.ai.ragent.framework.convention.ToolCall;
+import com.nageoffer.ai.ragent.framework.convention.ToolDefinition;
 import com.nageoffer.ai.ragent.framework.trace.RagStreamTraceSupport;
 import com.nageoffer.ai.ragent.framework.trace.RagStreamTraceSupport.StreamSpan;
 import com.nageoffer.ai.ragent.infra.config.AIModelProperties;
@@ -44,6 +48,7 @@ import okio.BufferedSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -88,10 +93,10 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
      * 默认实现：当请求开启 thinking 时添加 enable_thinking 字段
      */
     protected void customizeRequestBody(JsonObject body, ChatRequest request) {
+        // 仅在 thinking=true 时显式发送 enable_thinking=true；
+        // thinking=false 时不发送该字段，让 API 使用默认值（百炼 qwen3.7-max 等模型不允许 enable_thinking=false）
         if (Boolean.TRUE.equals(request.getThinking())) {
             body.addProperty("enable_thinking", true);
-        } else {
-            body.addProperty("enable_thinking", false);
         }
     }
 
@@ -136,6 +141,46 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
         }
 
         return extractChatContent(respJson);
+    }
+
+    /**
+     * 同步调用（支持 Function Calling）
+     * <p>
+     * 与 {@link #doChat} 类似，但返回结构化 {@link ChatResponse}，
+     * 同时提取 content 和 tool_calls。
+     */
+    protected ChatResponse doChatWithTools(ChatRequest request, ModelTarget target) {
+        AIModelProperties.ProviderConfig provider = HttpResponseHelper.requireProvider(target, provider());
+        if (requiresApiKey()) {
+            HttpResponseHelper.requireApiKey(provider, provider());
+        }
+
+        JsonObject reqBody = buildRequestBody(request, target, false);
+        Request requestHttp = newAuthorizedRequest(provider, target)
+                .post(RequestBody.create(reqBody.toString(), HttpMediaTypes.JSON))
+                .build();
+
+        Call httpCall = resolveSyncClient(target.timeoutMs()).newCall(requestHttp);
+
+        JsonObject respJson;
+        try (Response response = httpCall.execute()) {
+            if (!response.isSuccessful()) {
+                String body = HttpResponseHelper.readBody(response.body());
+                log.warn("{} 同步请求失败(FC): status={}, body={}", provider(), response.code(), body);
+                throw new ModelClientException(
+                        provider() + " 同步请求失败(FC): HTTP " + response.code(),
+                        ModelClientErrorType.fromHttpStatus(response.code()),
+                        response.code()
+                );
+            }
+            respJson = HttpResponseHelper.parseJson(response.body(), provider());
+        } catch (IOException e) {
+            throw new ModelClientException(
+                    provider() + " 同步请求失败(FC): " + e.getMessage(),
+                    ModelClientErrorType.NETWORK_ERROR, null, e);
+        }
+
+        return extractChatResponse(respJson);
     }
 
     /**
@@ -276,6 +321,14 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
             body.addProperty("max_tokens", request.getMaxTokens());
         }
 
+        // Function Calling：tools 定义
+        if (CollUtil.isNotEmpty(request.getTools())) {
+            body.add("tools", buildToolsArray(request.getTools()));
+            if (request.getToolChoice() != null) {
+                body.addProperty("tool_choice", request.getToolChoice());
+            }
+        }
+
         customizeRequestBody(body, request);
         return body;
     }
@@ -287,9 +340,69 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
             for (ChatMessage m : messages) {
                 JsonObject msg = new JsonObject();
                 msg.addProperty("role", toOpenAiRole(m.getRole()));
-                msg.addProperty("content", m.getContent());
+
+                // content 处理：TOOL 角色必须有 content，ASSISTANT 角色可能 content 为空但有 tool_calls
+                if (m.getContent() != null) {
+                    msg.addProperty("content", m.getContent());
+                } else if (m.getRole() != ChatMessage.Role.ASSISTANT) {
+                    msg.addProperty("content", "");
+                }
+
+                // ASSISTANT 角色携带 tool_calls
+                if (m.getRole() == ChatMessage.Role.ASSISTANT && CollUtil.isNotEmpty(m.getToolCalls())) {
+                    msg.add("tool_calls", buildToolCallsArray(m.getToolCalls()));
+                }
+
+                // TOOL 角色携带 tool_call_id
+                if (m.getRole() == ChatMessage.Role.TOOL && m.getToolCallId() != null) {
+                    msg.addProperty("tool_call_id", m.getToolCallId());
+                }
+
                 arr.add(msg);
             }
+        }
+        return arr;
+    }
+
+    private JsonArray buildToolsArray(List<ToolDefinition> tools) {
+        JsonArray arr = new JsonArray();
+        for (ToolDefinition tool : tools) {
+            JsonObject toolObj = new JsonObject();
+            toolObj.addProperty("type", tool.getType() != null ? tool.getType() : "function");
+
+            JsonObject funcObj = new JsonObject();
+            ToolDefinition.FunctionDef fn = tool.getFunction();
+            if (fn != null) {
+                funcObj.addProperty("name", fn.getName());
+                if (fn.getDescription() != null) {
+                    funcObj.addProperty("description", fn.getDescription());
+                }
+                if (fn.getParameters() != null) {
+                    funcObj.add("parameters", gson.toJsonTree(fn.getParameters()));
+                }
+            }
+            toolObj.add("function", funcObj);
+            arr.add(toolObj);
+        }
+        return arr;
+    }
+
+    private JsonArray buildToolCallsArray(List<ToolCall> toolCalls) {
+        JsonArray arr = new JsonArray();
+        for (ToolCall tc : toolCalls) {
+            JsonObject tcObj = new JsonObject();
+            tcObj.addProperty("id", tc.getId());
+            tcObj.addProperty("type", "function");
+
+            JsonObject funcObj = new JsonObject();
+            funcObj.addProperty("name", tc.getName());
+            if (tc.getArguments() != null) {
+                funcObj.addProperty("arguments", gson.toJson(tc.getArguments()));
+            } else {
+                funcObj.addProperty("arguments", "{}");
+            }
+            tcObj.add("function", funcObj);
+            arr.add(tcObj);
         }
         return arr;
     }
@@ -299,6 +412,7 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
             case SYSTEM -> "system";
             case USER -> "user";
             case ASSISTANT -> "assistant";
+            case TOOL -> "tool";
         };
     }
 
@@ -312,6 +426,17 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
     }
 
     private String extractChatContent(JsonObject respJson) {
+        ChatResponse response = extractChatResponse(respJson);
+        return response.getContent() != null ? response.getContent() : "";
+    }
+
+    /**
+     * 从 OpenAI 兼容响应中提取结构化内容（content + tool_calls）
+     * <p>
+     * 当模型决定调用工具时，content 可能为空或 null，
+     * tool_calls 非空表示模型请求执行工具。
+     */
+    protected ChatResponse extractChatResponse(JsonObject respJson) {
         if (respJson == null || !respJson.has("choices")) {
             throw new ModelClientException(provider() + " 响应缺少 choices", ModelClientErrorType.INVALID_RESPONSE, null);
         }
@@ -324,13 +449,51 @@ public abstract class AbstractOpenAIStyleChatClient implements ChatClient {
             throw new ModelClientException(provider() + " 响应缺少 message", ModelClientErrorType.INVALID_RESPONSE, null);
         }
         JsonObject message = choice0.getAsJsonObject("message");
-        if (message == null || !message.has("content") || message.get("content").isJsonNull()) {
-            throw new ModelClientException(provider() + " 响应缺少 content", ModelClientErrorType.INVALID_RESPONSE, null);
+        if (message == null) {
+            throw new ModelClientException(provider() + " 响应 message 为空", ModelClientErrorType.INVALID_RESPONSE, null);
         }
-        String content = message.get("content").getAsString();
-        if (content.isBlank()) {
-            throw new ModelClientException(provider() + " 响应 content 为空白", ModelClientErrorType.INVALID_RESPONSE, null);
+
+        // 提取 content（模型调用工具时可能为 null）
+        String content = null;
+        if (message.has("content") && !message.get("content").isJsonNull()) {
+            content = message.get("content").getAsString();
         }
-        return content;
+
+        // 提取 tool_calls
+        List<ToolCall> toolCalls = null;
+        if (message.has("tool_calls") && !message.get("tool_calls").isJsonNull()) {
+            JsonArray tcArray = message.getAsJsonArray("tool_calls");
+            toolCalls = new ArrayList<>();
+            for (JsonElement tcElem : tcArray) {
+                JsonObject tcObj = tcElem.getAsJsonObject();
+                String tcId = tcObj.has("id") ? tcObj.get("id").getAsString() : null;
+                JsonObject tcFunc = tcObj.has("function") ? tcObj.getAsJsonObject("function") : null;
+                String tcName = tcFunc != null && tcFunc.has("name") ? tcFunc.get("name").getAsString() : null;
+                String tcArgsStr = tcFunc != null && tcFunc.has("arguments") ? tcFunc.get("arguments").getAsString() : "{}";
+                Map<String, Object> tcArgs = parseArguments(tcArgsStr);
+                toolCalls.add(new ToolCall(tcId, tcName, tcArgs));
+            }
+        }
+
+        return ChatResponse.builder()
+                .content(content)
+                .toolCalls(toolCalls)
+                .build();
+    }
+
+    /**
+     * 解析工具参数 JSON 字符串为 Map
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> parseArguments(String argsJson) {
+        if (argsJson == null || argsJson.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return gson.fromJson(argsJson, Map.class);
+        } catch (Exception e) {
+            log.warn("{} 工具参数解析失败，返回空 Map: args={}", provider(), argsJson, e);
+            return Map.of();
+        }
     }
 }

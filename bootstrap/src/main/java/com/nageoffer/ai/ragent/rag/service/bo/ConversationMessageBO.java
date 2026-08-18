@@ -84,4 +84,9 @@ public class ConversationMessageBO {
      * 消息结束状态：NORMAL=正常完成，INTERRUPTED=用户中断，REJECTED=限流拒绝
      */
     private String messageStatus;
+
+    /**
+     * 消息类型：NORMAL=正常对话，TOOL_SUMMARY=工具调用摘要
+     */
+    private String messageType;
 }

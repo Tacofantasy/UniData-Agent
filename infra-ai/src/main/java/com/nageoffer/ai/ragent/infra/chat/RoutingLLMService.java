@@ -19,6 +19,7 @@ package com.nageoffer.ai.ragent.infra.chat;
 
 import cn.hutool.core.collection.CollUtil;
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
+import com.nageoffer.ai.ragent.framework.convention.ChatResponse;
 import com.nageoffer.ai.ragent.framework.errorcode.BaseErrorCode;
 import com.nageoffer.ai.ragent.framework.exception.RemoteException;
 import com.nageoffer.ai.ragent.framework.trace.RagTraceNode;
@@ -107,6 +108,28 @@ public class RoutingLLMService implements LLMService {
                 selector.selectChatCandidates(Boolean.TRUE.equals(request.getThinking()), tier, preferredModelId),
                 target -> clientsByProvider.get(target.candidate().getProvider()),
                 (client, target) -> client.chat(request, target)
+        );
+    }
+
+    @Override
+    @RagTraceNode(name = "llm-chat-fc-routing", type = "LLM_ROUTING")
+    public ChatResponse chatWithTools(ChatRequest request) {
+        return executor.executeWithFallback(
+                ModelCapability.CHAT,
+                selector.selectChatCandidates(Boolean.TRUE.equals(request.getThinking())),
+                target -> clientsByProvider.get(target.candidate().getProvider()),
+                (client, target) -> client.chatWithTools(request, target)
+        );
+    }
+
+    @Override
+    @RagTraceNode(name = "llm-chat-fc-routing", type = "LLM_ROUTING")
+    public ChatResponse chatWithTools(ChatRequest request, Tier tier) {
+        return executor.executeWithFallback(
+                ModelCapability.CHAT,
+                selector.selectChatCandidates(Boolean.TRUE.equals(request.getThinking()), tier),
+                target -> clientsByProvider.get(target.candidate().getProvider()),
+                (client, target) -> client.chatWithTools(request, target)
         );
     }
 

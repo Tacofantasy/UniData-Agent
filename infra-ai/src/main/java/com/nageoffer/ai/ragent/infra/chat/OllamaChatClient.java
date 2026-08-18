@@ -18,6 +18,7 @@
 package com.nageoffer.ai.ragent.infra.chat;
 
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
+import com.nageoffer.ai.ragent.framework.convention.ChatResponse;
 import com.nageoffer.ai.ragent.framework.trace.RagTraceNode;
 import com.nageoffer.ai.ragent.infra.enums.ModelProvider;
 import com.nageoffer.ai.ragent.infra.model.ModelTarget;
@@ -42,6 +43,12 @@ public class OllamaChatClient extends AbstractOpenAIStyleChatClient {
     @RagTraceNode(name = "ollama-chat", type = "LLM_PROVIDER")
     public String chat(ChatRequest request, ModelTarget target) {
         return doChat(request, target);
+    }
+
+    @Override
+    @RagTraceNode(name = "ollama-chat-fc", type = "LLM_PROVIDER")
+    public ChatResponse chatWithTools(ChatRequest request, ModelTarget target) {
+        return doChatWithTools(request, target);
     }
 
     @Override

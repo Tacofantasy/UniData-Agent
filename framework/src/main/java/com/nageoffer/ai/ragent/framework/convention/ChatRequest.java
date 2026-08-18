@@ -110,6 +110,28 @@ public class ChatRequest {
     private Boolean thinking;
 
     /**
+     * 可用工具定义列表（Function Calling）
+     * <p>
+     * 非空时，适配层在请求体中增加 tools 字段，
+     * 模型可在响应中返回 tool_calls 请求调用工具。
+     * 为空时模型只进行纯文本对话。
+     * </p>
+     */
+    @Default
+    private List<ToolDefinition> tools = new ArrayList<>();
+
+    /**
+     * 工具调用策略（可选）
+     * <p>
+     * <ul>
+     *   <li>{@code "auto"}：模型自主决定是否调用工具（默认）</li>
+     *   <li>{@code "none"}：禁止模型调用工具</li>
+     *   <li>{@code "required"}：强制模型调用工具</li>
+     * </ul>
+     */
+    private String toolChoice;
+
+    /**
      * 可选：是否启用工具调用（Tool Calling / Function Calling）
      * <p>
      * 当前预留字段，方便后续扩展为带工具调用能力的对话请求：

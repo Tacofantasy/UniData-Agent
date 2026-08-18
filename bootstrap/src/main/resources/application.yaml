@@ -44,7 +44,10 @@ rocketmq:
 
 ragent:
   engine:
-    type: workflow  # 执行架构档位，可选 workflow（v1 编排管线）/ agent（v2 ReAct 架构，RAG 管线降级为主 Agent 的一个 Tool）
+    type: agent  # 执行架构档位，可选 workflow（v1 编排管线）/ agent（v2 ReAct 架构，RAG 管线降级为主 Agent 的一个 Tool）
+  agent:
+    max-iterations: 5  # ReAct 循环最大迭代次数（ADR-0005），默认 5
+    tool-parallelism: 4  # 工具并行执行线程数（ADR-0015）
   demo-mode: false
   eval:
     enabled: true

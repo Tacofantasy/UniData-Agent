@@ -18,6 +18,7 @@
 package com.nageoffer.ai.ragent.infra.chat;
 
 import com.nageoffer.ai.ragent.framework.convention.ChatRequest;
+import com.nageoffer.ai.ragent.framework.convention.ChatResponse;
 import com.nageoffer.ai.ragent.infra.enums.Tier;
 
 /**
@@ -83,6 +84,26 @@ public interface LLMService {
      * @return 模型返回的完整回答
      */
     String chat(ChatRequest request, Tier tier, String preferredModelId);
+
+    /**
+     * 同步调用（支持 Function Calling，默认档位）
+     * <p>
+     * 当 request.tools 非空时，模型可能在响应中返回 tool_calls。
+     * 返回 {@link ChatResponse} 同时包含文本内容和工具调用请求。
+     *
+     * @param request ChatRequest，包含工具定义
+     * @return 结构化响应，包含 content 和 toolCalls
+     */
+    ChatResponse chatWithTools(ChatRequest request);
+
+    /**
+     * 同步调用（支持 Function Calling，指定档位覆盖）
+     *
+     * @param request ChatRequest，包含工具定义
+     * @param tier    目标档位
+     * @return 结构化响应，包含 content 和 toolCalls
+     */
+    ChatResponse chatWithTools(ChatRequest request, Tier tier);
 
     /**
      * 流式调用（默认档位）

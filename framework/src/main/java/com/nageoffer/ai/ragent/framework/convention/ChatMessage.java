@@ -31,7 +31,8 @@ import java.util.List;
  * <ul>
  *   <li>{@link Role#SYSTEM}：系统提示词，用于为大模型设定行为、规则</li>
  *   <li>{@link Role#USER}：用户输入消息</li>
- *   <li>{@link Role#ASSISTANT}：大模型（助手）回复内容</li>
+ *   <li>{@link Role#ASSISTANT}：大模型（助手）回复内容，可携带 tool_calls</li>
+ *   <li>{@link Role#TOOL}：工具执行结果消息，关联对应的 tool_call_id</li>
  * </ul>
  * 该结构适合在不同模型/厂商之间做一层通用抽象
  * </p>
@@ -58,7 +59,12 @@ public class ChatMessage {
         /**
          * 助手机器人角色，表示大模型返回的回复内容
          */
-        ASSISTANT;
+        ASSISTANT,
+
+        /**
+         * 工具角色，表示工具执行后返回的结果消息
+         */
+        TOOL;
 
         /**
          * 根据字符串值匹配对应的角色枚举
@@ -115,6 +121,22 @@ public class ChatMessage {
      * 推荐问题 grounding 片段（仅 ASSISTANT 角色可能携带，随消息落库供推荐追问生成 grounding，不参与模型上下文）
      */
     private List<GroundingChunk> retrievedChunks;
+
+    /**
+     * 工具调用列表（仅 ASSISTANT 角色携带，用于 Function Calling）
+     * <p>
+     * 当模型决定调用工具时，content 可能为空或包含推理文本，
+     * toolCalls 携带模型请求执行的工具调用列表
+     */
+    private List<ToolCall> toolCalls;
+
+    /**
+     * 工具调用 ID（仅 TOOL 角色携带）
+     * <p>
+     * 关联对应的 assistant 消息中的 tool_call_id，
+     * 使模型能将工具结果与请求对应起来
+     */
+    private String toolCallId;
 
     /**
      * 当前助手消息对应的用户消息 ID

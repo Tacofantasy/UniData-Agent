@@ -114,6 +114,11 @@ public class ConversationMessageDO {
     private String messageStatus;
 
     /**
+     * 消息类型：NORMAL=正常对话，TOOL_SUMMARY=工具调用摘要（Agent ReAct 循环产生）
+     */
+    private String messageType;
+
+    /**
      * 创建时间，自动填充
      */
     @TableField(fill = FieldFill.INSERT)
