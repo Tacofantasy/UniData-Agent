@@ -1,6 +1,6 @@
 # Token 预算控制策略
 
-采用条件式策略，取决于 `ragent.agent.max-iterations` 配置值：
+采用条件式策略，取决于 `unidata.agent.max-iterations` 配置值：
 
 - **max-iterations ≤ 5**：不做额外 Token 预算控制。5 轮循环上限天然限制了上下文膨胀，最坏情况约 21500 token 在 32K 窗口内可控。
 - **max-iterations > 5**：对工具返回结果做截断（最大 2000 token），并输出 WARN 日志标注异常配置，但不阻塞流程。

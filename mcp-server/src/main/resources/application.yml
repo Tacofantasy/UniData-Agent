@@ -3,4 +3,4 @@ server:
 
 spring:
   application:
-    name: ragent-mcp-server
+    name: unidata-mcp-server

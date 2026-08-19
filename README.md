@@ -1,8 +1,8 @@
 <p align="center">
-  <a href="https://github.com/nageoffer/ragent">
+  <a href="https://github.com/Tacofantasy/UniData-Agent">
     <picture>
-      <source srcset="assets/ragent-ai-banner.png">
-      <img src="assets/ragent-ai-banner.png" alt="Ragent AI">
+      <source srcset="assets/unidata-agent-banner.png">
+      <img src="assets/unidata-agent-banner.png" alt="UniData Agent">
     </picture>
   </a>
 </p>
@@ -13,9 +13,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/nageoffer/ragent/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/nageoffer/ragent?style=flat-square&logo=github&color=e8b227" /></a>&nbsp;
-  <a href="https://github.com/nageoffer/ragent/network/members"><img alt="GitHub forks" src="https://img.shields.io/github/forks/nageoffer/ragent?style=flat-square&logo=github&color=2d6a8a" /></a>&nbsp;
-  <a href="https://github.com/nageoffer/ragent/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/nageoffer/ragent?style=flat-square&color=b56e7a" /></a>&nbsp;
+  <a href="https://github.com/Tacofantasy/UniData-Agent/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Tacofantasy/UniData-Agent?style=flat-square&logo=github&color=e8b227" /></a>&nbsp;
+  <a href="https://github.com/Tacofantasy/UniData-Agent/network/members"><img alt="GitHub forks" src="https://img.shields.io/github/forks/Tacofantasy/UniData-Agent?style=flat-square&logo=github&color=2d6a8a" /></a>&nbsp;
+  <a href="https://github.com/Tacofantasy/UniData-Agent/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/Tacofantasy/UniData-Agent?style=flat-square&color=b56e7a" /></a>&nbsp;
   <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-4a9b8f?style=flat-square" /></a>
   <img src="https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=flat-square&logo=springboot&logoColor=white" />
   <img src="https://img.shields.io/badge/MCP-1.1.2-FF6B6B?style=flat-square" />
@@ -24,9 +24,9 @@
 
 ---
 
-## 🤖 什么是 Ragent AI？
+## 🤖 什么是 UniData Agent？
 
-Ragent 是一个 **基于 ReAct 循环（Reasoning + Acting）的企业级 Agent 智能助手平台**。它将传统的线性 RAG 管线（意图分类 → 检索 → 合成）重构为 **Agent 自主决策架构**——LLM 通过原生 Function Calling 自主决定何时调用工具、调用哪个工具、调用几次。
+UniData Agent 是一个 **基于 ReAct 循环（Reasoning + Acting）的企业级 Agent 智能助手平台**。它将传统的线性 RAG 管线（意图分类 → 检索 → 合成）重构为 **Agent 自主决策架构**——LLM 通过原生 Function Calling 自主决定何时调用工具、调用哪个工具、调用几次。
 
 ### 核心架构：Agent + MCP 工具生态
 
@@ -71,7 +71,7 @@ Ragent 是一个 **基于 ReAct 循环（Reasoning + Acting）的企业级 Agent
 
 ### 与传统 RAG 的本质区别
 
-| 维度 | 传统 RAG 线性管线 | Ragent Agent 架构 |
+| 维度 | 传统 RAG 线性管线 | UniData Agent 架构 |
 |:---|:---|:---|
 | **决策主体** | 固定管线步骤 | LLM 自主决策 |
 | **检索触发** | 每次必检 | LLM 判断是否需要 |
@@ -215,15 +215,15 @@ AGENT_LOOP (agent-react-loop, 19366ms)
 | `bootstrap` | 业务编排层 | **AgentChatPipeline**、McpToolRegistry、RAG Core、入库 Pipeline、管理 API |
 | `mcp-server` | MCP 工具服务 | SalesMcpExecutor、WeatherMcpExecutor、TicketMcpExecutor、YouComSearchMcpExecutor |
 
-![](docs/assets/ragent-architecture-overview.svg)
+![](docs/assets/unidata-architecture-overview.svg)
 
 ### 运行时拓扑
 
-![](assets/ragent-module-layering-v2.png)
+![](assets/unidata-module-layering-v2.png)
 
 ### 一次用户提问的完整链路
 
-![](assets/ragent-chain-v3.png)
+![](assets/unidata-chain-v3.png)
 
 ---
 
@@ -242,14 +242,14 @@ AGENT_LOOP (agent-react-loop, 19366ms)
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/nageoffer/ragent.git
-cd ragent
+git clone https://github.com/Tacofantasy/UniData-Agent.git
+cd UniData-Agent
 
 # 2. 配置环境变量（见 bootstrap/src/main/resources/application.yaml）
 # - 数据库连接、Redis、Milvus、OSS 等
 
 # 3. 执行数据库迁移脚本
-psql -U your_user -d ragent -f resources/database/upgrades/v1.1.0/*.sql
+psql -U your_user -d unidata -f resources/database/upgrades/v1.1.0/*.sql
 
 # 4. 构建并启动
 ./mvnw clean package -DskipTests
@@ -275,7 +275,7 @@ java -jar mcp-server/target/mcp-server-0.0.1-SNAPSHOT.jar --server.port=9099
 
 ```yaml
 # application.yaml
-ragent:
+unidata:
   engine:
     type: agent          # agent = Agent 模式, workflow = 传统 RAG 管线
   agent:
@@ -409,7 +409,7 @@ Spring AI 和 LangChain4j 都是优秀的框架，但本项目选择自己实现
 通过配置文件切换，无需改代码：
 
 ```yaml
-ragent:
+unidata:
   engine:
     type: agent    # agent = ReAct Agent, workflow = 线性 RAG 管线
 ```
@@ -456,8 +456,8 @@ bootstrap 通过 HTTP MCP Client 连接远程 MCP Server，自动发现可用工
 5. 开启 Pull Request
 
 <p align="left">
-    <a href="https://github.com/nageoffer/ragent/graphs/contributors">
-        <img src="https://contrib.rocks/image?repo=nageoffer/ragent&columns=8" />
+    <a href="https://github.com/Tacofantasy/UniData-Agent/graphs/contributors">
+        <img src="https://contrib.rocks/image?repo=Tacofantasy/UniData-Agent&columns=8" />
     </a>
 </p>
 
@@ -470,11 +470,11 @@ bootstrap 通过 HTTP MCP Client 连接远程 MCP Server，自动发现可用工
 ---
 
 <p align="center">
-  <a href="https://www.star-history.com/?repos=nageoffer%2Fragent&type=date&legend=top-left">
+  <a href="https://www.star-history.com/?repos=Tacofantasy%2FUniData-Agent&type=date&legend=top-left">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=nageoffer/ragent&type=date&theme=dark&legend=top-left" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=nageoffer/ragent&type=date&theme=light&legend=top-left" />
-      <img alt="Star History Chart" src="https://api.star-history.com/image?repos=nageoffer/ragent&type=date&legend=top-left" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=Tacofantasy/UniData-Agent&type=date&theme=dark&legend=top-left" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=Tacofantasy/UniData-Agent&type=date&theme=light&legend=top-left" />
+      <img alt="Star History Chart" src="https://api.star-history.com/image?repos=Tacofantasy/UniData-Agent&type=date&legend=top-left" />
     </picture>
   </a>
 </p>

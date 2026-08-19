@@ -170,12 +170,12 @@ callback.onComplete()
 ```
 
 ### 4.3 配置项
-- `ragent.agent.max-iterations=5`（默认值，可配置）
+- `unidata.agent.max-iterations=5`（默认值，可配置）
 - 在 `application.yaml` 中增加 agent 配置段
 
 ### 4.4 验证标准
-- `ragent.engine.type=agent` 时走 AgentChatPipeline
-- `ragent.engine.type=workflow` 时走 StreamChatPipeline（不受影响）
+- `unidata.engine.type=agent` 时走 AgentChatPipeline
+- `unidata.engine.type=workflow` 时走 StreamChatPipeline（不受影响）
 - Agent Prompt 可在前端管理页面编辑
 
 ---
@@ -205,7 +205,7 @@ callback.onComplete()
 | deepThinking 开启 | 中间轮标准模型，最终轮深度思考 | Tier 正确 |
 
 ### 5.4 回归验证
-- `ragent.engine.type=workflow` 时所有现有功能不受影响
+- `unidata.engine.type=workflow` 时所有现有功能不受影响
 - 意图管理、知识库管理、文档解析等功能不受影响
 
 ---

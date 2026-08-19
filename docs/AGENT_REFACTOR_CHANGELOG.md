@@ -105,10 +105,10 @@ AgentChatContext.builder()
 
 #### `bootstrap/.../rag/service/pipeline/AgentConfigProperties.java` (44 行)
 
-**职责**: Agent 配置属性，对应 `application.yaml` 中的 `ragent.agent` 前缀。
+**职责**: Agent 配置属性，对应 `application.yaml` 中的 `unidata.agent` 前缀。
 
 ```yaml
-ragent:
+unidata:
   agent:
     max-iterations: 5      # ReAct 循环最大迭代次数
     tool-parallelism: 4    # 工具并行执行线程数
@@ -286,7 +286,7 @@ if (mode == OrchestrationMode.AGENT) {
 }
 ```
 
-**配置类**: `OrchestrationProperties` 读取 `ragent.engine.type`，返回 `OrchestrationMode` 枚举（WORKFLOW / AGENT）。
+**配置类**: `OrchestrationProperties` 读取 `unidata.engine.type`，返回 `OrchestrationMode` 枚举（WORKFLOW / AGENT）。
 
 ### 3.2 Function Calling 协议适配
 
@@ -432,7 +432,7 @@ private String messageType;  // NORMAL=正常对话, TOOL_SUMMARY=工具调用�
 #### `bootstrap/src/main/resources/application.yaml` (+5/-1)
 
 ```yaml
-ragent:
+unidata:
   engine:
     type: agent  # 从 workflow 改为 agent
   agent:

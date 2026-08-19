@@ -1,11 +1,11 @@
-# Ragent 上下文
+# UniData Agent 上下文
 
-Ragent 是一个企业级 RAG（检索增强生成）平台，正在从线性 WORKFLOW 管线演进为 Agent 架构，将 RAG 检索能力降级为 Agent 的一个 Tool。
+UniData Agent 是一个企业级 RAG（检索增强生成）平台，正在从线性 WORKFLOW 管线演进为 Agent 架构，将 RAG 检索能力降级为 Agent 的一个 Tool。
 
 ## 语言
 
 **编排模式（OrchestrationMode）**:
-系统执行架构的档位，由 `ragent.engine.type` 配置，可选 `workflow`（线性管线）或 `agent`（ReAct 循环）。切换需重启。
+系统执行架构的档位，由 `unidata.engine.type` 配置，可选 `workflow`（线性管线）或 `agent`（ReAct 循环）。切换需重启。
 _避免使用_: engine type, pipeline mode
 
 **ReAct 循环**:

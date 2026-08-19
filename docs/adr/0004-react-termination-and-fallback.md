@@ -1,7 +1,7 @@
 # ReAct 循环终止条件与兜底策略
 
 ## 最大循环轮数
-可配置，通过 `ragent.agent.max-iterations` 配置，默认 5 轮。
+可配置，通过 `unidata.agent.max-iterations` 配置，默认 5 轮。
 
 ## 超限兜底
 强制合成——将已收集到的所有工具结果作为上下文，用一次额外的 LLM 调用强制生成最终答案。复用现有 `RAGPromptService.buildStructuredMessages` 能力。
